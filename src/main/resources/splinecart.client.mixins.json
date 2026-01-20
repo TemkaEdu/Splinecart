@@ -1,7 +1,9 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "io.github.foundationgames.splinecart.mixin.client",
   "compatibilityLevel": "JAVA_21",
+  "refmap": "splinecart.refmap.json",
   "client": [
     "CameraMixin",
     "EntityRenderDispatcherMixin",

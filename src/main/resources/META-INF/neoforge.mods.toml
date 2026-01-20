@@ -1,0 +1,40 @@
+# NeoForge mod metadata for Splinecart
+# Ported from Fabric
+
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="https://github.com/FoundationGames/Splinecart/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+logoFile="assets/splinecart/icon.png"
+authors="${mod_authors}"
+description='''
+Minecart tracks that curve
+'''
+
+# Common mixins (server + client)
+[[mixins]]
+config="splinecart.mixins.json"
+
+# Client-only mixins
+[[mixins]]
+config="splinecart.client.mixins.json"
+
+# Dependencies
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neo_version}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
