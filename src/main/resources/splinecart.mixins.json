@@ -1,7 +1,9 @@
 {
   "required": true,
+  "minVersion": "0.8.5",
   "package": "io.github.foundationgames.splinecart.mixin",
   "compatibilityLevel": "JAVA_21",
+  "refmap": "splinecart.refmap.json",
   "mixins": [
     "EntityMixin"
   ],

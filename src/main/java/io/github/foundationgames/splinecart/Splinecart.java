@@ -6,100 +6,138 @@ import io.github.foundationgames.splinecart.component.OriginComponent;
 import io.github.foundationgames.splinecart.entity.TrackFollowerEntity;
 import io.github.foundationgames.splinecart.item.TrackItem;
 import io.github.foundationgames.splinecart.util.TrackProgress;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.ComponentType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.Supplier;
 
-public class Splinecart implements ModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("splinecart");
+@Mod(Splinecart.MOD_ID)
+public class Splinecart {
+    public static final String MOD_ID = "splinecart";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public static final TrackTiesBlock TRACK_TIES = Registry.register(Registries.BLOCK, id("track_ties"),
-			new TrackTiesBlock(AbstractBlock.Settings.copy(Blocks.RAIL)));
-	public static final BlockEntityType<TrackTiesBlockEntity> TRACK_TIES_BE = Registry.register(Registries.BLOCK_ENTITY_TYPE, id("track_ties"),
-			FabricBlockEntityTypeBuilder.create(TrackTiesBlockEntity::new, TRACK_TIES).build());
+    // Deferred Registers
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MOD_ID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, MOD_ID);
+    public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MOD_ID);
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
+    public static final DeferredRegister<net.minecraft.network.syncher.EntityDataSerializer<?>> DATA_SERIALIZERS = 
+            DeferredRegister.create(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS, MOD_ID);
 
-	public static final TrackItem TRACK = Registry.register(Registries.ITEM, id("track"),
-			new TrackItem(TrackType.DEFAULT, new Item.Settings().component(DataComponentTypes.LORE,
-					lore(Text.translatable("item.splinecart.track.desc").formatted(Formatting.GRAY))
-			)));
-	public static final TrackItem CHAIN_DRIVE_TRACK = Registry.register(Registries.ITEM, id("chain_drive_track"),
-			new TrackItem(TrackType.CHAIN_DRIVE, new Item.Settings().component(DataComponentTypes.LORE,
-					lore(Text.translatable("item.splinecart.chain_drive_track.desc").formatted(Formatting.GRAY))
-			)));
-	public static final TrackItem MAGNETIC_TRACK = Registry.register(Registries.ITEM, id("magnetic_track"),
-			new TrackItem(TrackType.MAGNETIC, new Item.Settings().component(DataComponentTypes.LORE,
-					lore(Text.translatable("item.splinecart.magnetic_track.desc").formatted(Formatting.GRAY))
-			)));
+    // Blocks
+    public static final DeferredBlock<TrackTiesBlock> TRACK_TIES = BLOCKS.register("track_ties",
+            () -> new TrackTiesBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.RAIL)));
 
-	public static final ComponentType<OriginComponent> ORIGIN_POS = Registry.register(Registries.DATA_COMPONENT_TYPE, id("origin"),
-			ComponentType.<OriginComponent>builder().codec(OriginComponent.CODEC).build());
+    // Block Entity Types
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TrackTiesBlockEntity>> TRACK_TIES_BE = 
+            BLOCK_ENTITY_TYPES.register("track_ties",
+                    () -> BlockEntityType.Builder.of(TrackTiesBlockEntity::new, TRACK_TIES.get()).build(null));
 
-	public static final EntityType<TrackFollowerEntity> TRACK_FOLLOWER = Registry.register(Registries.ENTITY_TYPE, id("track_follower"),
-			EntityType.Builder.<TrackFollowerEntity>create(TrackFollowerEntity::new, SpawnGroup.MISC).trackingTickInterval(2).dimensions(0.25f, 0.25f).build());
+    // Items
+    public static final DeferredItem<TrackItem> TRACK = ITEMS.register("track",
+            () -> new TrackItem(TrackType.DEFAULT, new Item.Properties()
+                    .component(DataComponents.LORE, lore(Component.translatable("item.splinecart.track.desc").withStyle(net.minecraft.ChatFormatting.GRAY)))));
+    
+    public static final DeferredItem<TrackItem> CHAIN_DRIVE_TRACK = ITEMS.register("chain_drive_track",
+            () -> new TrackItem(TrackType.CHAIN_DRIVE, new Item.Properties()
+                    .component(DataComponents.LORE, lore(Component.translatable("item.splinecart.chain_drive_track.desc").withStyle(net.minecraft.ChatFormatting.GRAY)))));
+    
+    public static final DeferredItem<TrackItem> MAGNETIC_TRACK = ITEMS.register("magnetic_track",
+            () -> new TrackItem(TrackType.MAGNETIC, new Item.Properties()
+                    .component(DataComponents.LORE, lore(Component.translatable("item.splinecart.magnetic_track.desc").withStyle(net.minecraft.ChatFormatting.GRAY)))));
+    
+    public static final DeferredItem<BlockItem> TRACK_TIES_ITEM = ITEMS.register("track_ties",
+            () -> new BlockItem(TRACK_TIES.get(), new Item.Properties()
+                    .component(DataComponents.LORE, lore(Component.translatable("item.splinecart.track_ties.desc").withStyle(net.minecraft.ChatFormatting.GRAY)))));
 
-	public static final TagKey<EntityType<?>> CARTS = TagKey.of(RegistryKeys.ENTITY_TYPE, id("carts"));
+    // Data Component Types
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<OriginComponent>> ORIGIN_POS = 
+            DATA_COMPONENT_TYPES.register("origin",
+                    () -> DataComponentType.<OriginComponent>builder().persistent(OriginComponent.CODEC).build());
 
-	public static final ItemGroup SPLINECART_GROUP = FabricItemGroup.builder()
-			.displayName(Text.translatable("itemGroup.splinecart"))
-			.entries((ctx, e) -> {
-				e.add(TRACK_TIES.asItem().getDefaultStack());
-				e.add(TRACK.getDefaultStack());
-				e.add(CHAIN_DRIVE_TRACK.getDefaultStack());
-				e.add(MAGNETIC_TRACK.getDefaultStack());
-			})
-			.icon(CHAIN_DRIVE_TRACK::getDefaultStack)
-			.build();
+    // Entity Types
+    public static final DeferredHolder<EntityType<?>, EntityType<TrackFollowerEntity>> TRACK_FOLLOWER = 
+            ENTITY_TYPES.register("track_follower",
+                    () -> EntityType.Builder.<TrackFollowerEntity>of(TrackFollowerEntity::new, MobCategory.MISC)
+                            .updateInterval(2)
+                            .sized(0.25f, 0.25f)
+                            .build(id("track_follower").toString()));
 
-	@Override
-	public void onInitialize() {
-		var tieItem = Registry.register(Registries.ITEM, id("track_ties"),
-				new BlockItem(TRACK_TIES, new Item.Settings()
-						.component(DataComponentTypes.LORE,
-								lore(Text.translatable("item.splinecart.track_ties.desc").formatted(Formatting.GRAY))
-						)));
+    // Entity Data Serializers
+    public static final DeferredHolder<net.minecraft.network.syncher.EntityDataSerializer<?>, net.minecraft.network.syncher.EntityDataSerializer<TrackProgress>> TRACK_PROGRESS_SERIALIZER =
+            DATA_SERIALIZERS.register("track_progress", () -> TrackProgress.DATA_HANDLER);
 
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(entries -> {
-			entries.add(tieItem.getDefaultStack());
-			entries.add(TRACK.getDefaultStack());
-			entries.add(CHAIN_DRIVE_TRACK.getDefaultStack());
-			entries.add(MAGNETIC_TRACK.getDefaultStack());
-		});
+    // Tags
+    public static final TagKey<EntityType<?>> CARTS = TagKey.create(Registries.ENTITY_TYPE, id("carts"));
 
-		TrackedDataHandlerRegistry.register(TrackProgress.DATA_HANDLER);
+    // Creative Mode Tab
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> SPLINECART_TAB = CREATIVE_MODE_TABS.register("splinecart",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.splinecart"))
+                    .icon(() -> CHAIN_DRIVE_TRACK.get().getDefaultInstance())
+                    .displayItems((params, output) -> {
+                        output.accept(TRACK_TIES_ITEM.get().getDefaultInstance());
+                        output.accept(TRACK.get().getDefaultInstance());
+                        output.accept(CHAIN_DRIVE_TRACK.get().getDefaultInstance());
+                        output.accept(MAGNETIC_TRACK.get().getDefaultInstance());
+                    })
+                    .build());
 
-		Registry.register(Registries.ITEM_GROUP, id("splinecart"), SPLINECART_GROUP);
-	}
+    public Splinecart(IEventBus modEventBus) {
+        // Register all deferred registers
+        BLOCKS.register(modEventBus);
+        ITEMS.register(modEventBus);
+        BLOCK_ENTITY_TYPES.register(modEventBus);
+        ENTITY_TYPES.register(modEventBus);
+        DATA_COMPONENT_TYPES.register(modEventBus);
+        CREATIVE_MODE_TABS.register(modEventBus);
+        DATA_SERIALIZERS.register(modEventBus);
 
-	public static LoreComponent lore(Text lore) {
-		return new LoreComponent(List.of(lore));
-	}
+        // Register event handlers
+        modEventBus.addListener(this::addCreative);
+    }
 
-	public static Identifier id(String path) {
-		return Identifier.of("splinecart", path);
-	}
+    private void addCreative(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
+            event.accept(TRACK_TIES_ITEM);
+            event.accept(TRACK);
+            event.accept(CHAIN_DRIVE_TRACK);
+            event.accept(MAGNETIC_TRACK);
+        }
+    }
+
+    public static ItemLore lore(Component loreText) {
+        return new ItemLore(List.of(loreText));
+    }
+
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
 }

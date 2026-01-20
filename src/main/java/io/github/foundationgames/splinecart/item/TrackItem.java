@@ -4,14 +4,14 @@ import io.github.foundationgames.splinecart.Splinecart;
 import io.github.foundationgames.splinecart.TrackType;
 import io.github.foundationgames.splinecart.block.TrackTiesBlockEntity;
 import io.github.foundationgames.splinecart.component.OriginComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,62 +22,62 @@ public class TrackItem extends Item {
 
     public final TrackType track;
 
-    public TrackItem(TrackType track, Settings settings) {
-        super(settings);
+    public TrackItem(TrackType track, Properties properties) {
+        super(properties);
 
         this.track = track;
         ITEMS_BY_TYPE.put(track, this);
     }
 
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        if (context.getPlayer() != null && !context.getPlayer().canModifyBlocks()) {
-            return super.useOnBlock(context);
+    public InteractionResult useOn(UseOnContext context) {
+        if (context.getPlayer() != null && !context.getPlayer().mayBuild()) {
+            return super.useOn(context);
         }
 
-        var world = context.getWorld();
-        var pos = context.getBlockPos();
-        var stack = context.getStack();
+        var world = context.getLevel();
+        var pos = context.getClickedPos();
+        var stack = context.getItemInHand();
 
         if (world.getBlockEntity(pos) instanceof TrackTiesBlockEntity ties) {
-            if (world.isClient()) {
-                return ActionResult.SUCCESS;
+            if (world.isClientSide()) {
+                return InteractionResult.SUCCESS;
             }
 
-            var origin = stack.get(Splinecart.ORIGIN_POS);
+            var origin = stack.get(Splinecart.ORIGIN_POS.get());
             if (origin != null) {
                 var oPos = origin.pos();
                 if (!pos.equals(oPos) && world.getBlockEntity(oPos) instanceof TrackTiesBlockEntity oTies && oTies.next() == null && ties.prev() == null) {
                     oTies.setNext(pos, this.track);
 
-                    world.playSound(null, pos, SoundEvents.ENTITY_IRON_GOLEM_REPAIR, SoundCategory.BLOCKS, 1.5f, 0.7f);
+                    world.playSound(null, pos, SoundEvents.IRON_GOLEM_REPAIR, SoundSource.BLOCKS, 1.5f, 0.7f);
                 }
 
-                stack.remove(Splinecart.ORIGIN_POS);
+                stack.remove(Splinecart.ORIGIN_POS.get());
             } else {
-                stack.set(Splinecart.ORIGIN_POS, new OriginComponent(pos));
+                stack.set(Splinecart.ORIGIN_POS.get(), new OriginComponent(pos));
             }
         } else {
-            var origin = stack.get(Splinecart.ORIGIN_POS);
+            var origin = stack.get(Splinecart.ORIGIN_POS.get());
             if (origin != null) {
-                if (world.isClient()) {
-                    return ActionResult.CONSUME;
+                if (world.isClientSide()) {
+                    return InteractionResult.CONSUME;
                 }
 
-                stack.remove(Splinecart.ORIGIN_POS);
+                stack.remove(Splinecart.ORIGIN_POS.get());
             }
         }
 
-        return super.useOnBlock(context);
+        return super.useOn(context);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        super.appendTooltip(stack, context, tooltip, type);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
 
-        var origin = stack.get(Splinecart.ORIGIN_POS);
+        var origin = stack.get(Splinecart.ORIGIN_POS.get());
         if (origin != null) {
-            origin.appendTooltip(context, tooltip::add, type);
+            origin.addToTooltip(context, tooltip::add, flag);
         }
     }
 }
