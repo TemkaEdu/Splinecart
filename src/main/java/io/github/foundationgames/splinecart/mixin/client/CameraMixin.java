@@ -68,7 +68,9 @@ public abstract class CameraMixin {
                     }
 
                     if (SplinecartClient.CFG_ROTATE_CAMERA.get()) {
-                        rot.mul(Axis.YP.rotationDegrees(90 + vehicle.getViewYRot(tickDelta)).mul(rotation, rotation), rotation);
+                        var temp = new Quaternionf();
+                        Axis.YP.rotationDegrees(90 + vehicle.getViewYRot(tickDelta)).mul(rotation, temp);
+                        rot.mul(temp, rotation);
                     }
                 }
             }

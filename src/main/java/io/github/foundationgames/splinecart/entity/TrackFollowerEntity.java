@@ -40,9 +40,17 @@ public class TrackFollowerEntity extends Entity {
     private int positionInterpSteps;
     private int progInterpSteps;
 
-    private static final EntityDataAccessor<TrackProgress> TRACK_PROGRESS = SynchedEntityData.defineId(TrackFollowerEntity.class, Splinecart.TRACK_PROGRESS_SERIALIZER.get());
+    // Lazily initialized to avoid static initialization ordering issues
+    private static EntityDataAccessor<TrackProgress> TRACK_PROGRESS;
     public static final EntityDataAccessor<Vector3f> TRACK_MOTION = SynchedEntityData.defineId(TrackFollowerEntity.class, EntityDataSerializers.VECTOR3);
     private final Matrix3d basis = new Matrix3d().identity();
+
+    private static EntityDataAccessor<TrackProgress> getTrackProgressAccessor() {
+        if (TRACK_PROGRESS == null) {
+            TRACK_PROGRESS = SynchedEntityData.defineId(TrackFollowerEntity.class, Splinecart.TRACK_PROGRESS_SERIALIZER.get());
+        }
+        return TRACK_PROGRESS;
+    }
 
     private TrackProgress lastClientTrackProgress = TrackProgress.empty(position());
     private TrackProgress clientTrackProgress = TrackProgress.empty(position());
@@ -93,7 +101,7 @@ public class TrackFollowerEntity extends Entity {
             follower.splinePieceProgress = progress;
             follower.setStretch(start, end);
             follower.setPos(startPos);
-            follower.getEntityData().set(TRACK_PROGRESS, TrackProgress.of(startE, progress));
+            follower.getEntityData().set(getTrackProgressAccessor(), TrackProgress.of(startE, progress));
 
             return follower;
         }
@@ -244,7 +252,7 @@ public class TrackFollowerEntity extends Entity {
                 startE.pose().interpolate(endE.pose(), this.splinePieceProgress, pos, this.basis, deriv);
 
                 this.setPos(pos.x(), pos.y(), pos.z());
-                this.getEntityData().set(TRACK_PROGRESS, TrackProgress.of(startE, this.splinePieceProgress));
+                this.getEntityData().set(getTrackProgressAccessor(), TrackProgress.of(startE, this.splinePieceProgress));
 
                 double derivScale = deriv.length();
                 if (derivScale >= 0.0000001) {
@@ -304,7 +312,7 @@ public class TrackFollowerEntity extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(TRACK_PROGRESS, TrackProgress.empty(position()));
+        builder.define(getTrackProgressAccessor(), TrackProgress.empty(position()));
         builder.define(TRACK_MOTION, new Vector3f());
     }
 
@@ -312,8 +320,8 @@ public class TrackFollowerEntity extends Entity {
     public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
         super.onSyncedDataUpdated(data);
 
-        if (data.equals(TRACK_PROGRESS)) {
-            this.clientTrackProgress = getEntityData().get(TRACK_PROGRESS);
+        if (data.equals(getTrackProgressAccessor())) {
+            this.clientTrackProgress = getEntityData().get(getTrackProgressAccessor());
             if (this.firstProgUpdate) {
                 this.firstProgUpdate = false;
 
