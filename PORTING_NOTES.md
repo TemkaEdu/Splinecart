@@ -141,10 +141,9 @@
 ## TODO / Known Issues
 
 ### Build Environment
-- **KNOWN LIMITATION**: The NeoForge gradle plugin requires access to `https://maven.neoforged.net/releases` which is blocked in some CI/sandbox environments
-- To build locally, ensure network access to Maven Central and NeoForge Maven repositories
 - Build command: `./gradlew build`
 - Client run command: `./gradlew runClient`
+- Requires Gradle 8.14 (configured in gradle-wrapper.properties)
 
 ### Mixin Target Changes (NeoForge vs Fabric)
 The following mixin targets have been updated for NeoForge/Mojmap naming:
@@ -169,7 +168,12 @@ The following mixin targets have been updated for NeoForge/Mojmap naming:
 In NeoForge, shader registration is done via `RegisterShadersEvent` instead of a mixin into `GameRenderer.loadPrograms`. The GameRendererMixin has been removed and shader registration moved to SplinecartClient.
 
 ### HUD Overlay Registration
-In NeoForge, HUD overlays are registered via `RegisterGuiLayersEvent` using `IGuiOverlay` interface instead of Fabric's `HudRenderCallback`.
+In NeoForge 1.21.1, HUD overlays are registered via `RegisterGuiLayersEvent` using `LayeredDraw.Layer` interface instead of Fabric's `HudRenderCallback`.
 
 ### Client Commands
 NeoForge uses `RegisterClientCommandsEvent` with `CommandSourceStack` instead of Fabric's `ClientCommandRegistrationCallback` with `FabricClientCommandSource`.
+
+### Build Status
+- ✅ Build successful with `./gradlew build`
+- ✅ Produces `splinecart-0.3.1+1.21.1.jar`
+- Run with `./gradlew runClient`

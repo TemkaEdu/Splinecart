@@ -5,18 +5,17 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.client.gui.overlay.ExtendedGui;
-import net.neoforged.neoforge.client.gui.overlay.IGuiOverlay;
 
-public class SplinecartHud implements IGuiOverlay {
+public class SplinecartHud implements LayeredDraw.Layer {
     public static final Component CANCEL = Component.translatable("hud.splinecart.cancel").withStyle(ChatFormatting.RED);
     public static final Component CREATE = Component.translatable("hud.splinecart.create_track").withStyle(ChatFormatting.GREEN);
     public static final String RIGHT_CLICK_HINT = "hud.splinecart.right_click";
 
     @Override
-    public void render(ExtendedGui gui, GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+    public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         var client = Minecraft.getInstance();
         var world = client.level;
 

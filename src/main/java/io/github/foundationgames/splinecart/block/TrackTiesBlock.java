@@ -138,7 +138,7 @@ public class TrackTiesBlock extends DirectionalBlock implements EntityBlock {
         var pos = new Vector3d();
         var basis = new Matrix3d().identity();
 
-        var normVec = normal.getUnitVec3i();
+        var normVec = normal.getNormal();
         pos.set(normVec.getX(), normVec.getY(), normVec.getZ()).mul(-0.4375).add(block.getX() + 0.5, block.getY() + 0.5, block.getZ() + 0.5);
 
         if (normal == Direction.UP || normal == Direction.DOWN) {
