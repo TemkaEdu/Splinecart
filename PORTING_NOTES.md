@@ -152,6 +152,7 @@ The following mixin targets have been updated for NeoForge/Mojmap naming:
 - `Entity.getCameraPosVec` → `Entity.getEyePosition(F)`
 - `Camera.update` → `Camera.setup`
 - `Camera.setPos` → `Camera.setPosition`
+- `Camera.setRotation(FF)V` → `Camera.setRotation(FFF)V` (NeoForge 1.21.1 added a `roll` parameter)
 - `WorldRenderer` → `LevelRenderer`
 - `BlockView` → `BlockGetter`
 - `VertexConsumerProvider` → `MultiBufferSource`
