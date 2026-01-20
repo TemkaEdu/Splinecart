@@ -7,7 +7,6 @@
   "client": [
     "CameraMixin",
     "EntityRenderDispatcherMixin",
-    "GameRendererMixin",
     "InGameOverlayRendererMixin",
     "MinecartInsideSoundInstanceMixin",
     "MovingMinecartSoundInstanceMixin",
