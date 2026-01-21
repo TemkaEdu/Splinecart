@@ -49,9 +49,9 @@ public abstract class CameraMixin {
         }
     }
 
-    @Inject(method = "setRotation(FF)V",
+    @Inject(method = "setRotation(FFF)V",
             at = @At(value = "INVOKE", shift = At.Shift.AFTER, ordinal = 0, target = "Lorg/joml/Quaternionf;rotationYXZ(FFF)Lorg/joml/Quaternionf;", remap = false))
-    private void splinecart$updateCamRotationWhileRiding(float yaw, float pitch, CallbackInfo info) {
+    private void splinecart$updateCamRotationWhileRiding(float yaw, float pitch, float roll, CallbackInfo info) {
         var self = this.entity;
         var vehicle = self.getVehicle();
         var tickDelta = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
